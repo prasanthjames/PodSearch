@@ -15,6 +15,15 @@ const DLQ_FILE = path.join(DATA_DIR, 'dlq.json');
 const PROCESSED_FILE = path.join(DATA_DIR, 'processed-episodes.json');
 const PERMANENT_FAIL_FILE = path.join(DATA_DIR, 'permanent-fail.json');
 
+// Topics currently tracked
+const TOPICS = [
+  'finance',
+  'personal improvement',
+  'mexico city',
+  'el mencho',
+  'cartel'
+];
+
 function loadJSON(file, defaultVal = []) {
   if (!fs.existsSync(file)) return defaultVal;
   try {
@@ -110,6 +119,7 @@ function displayDashboard() {
   
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
+  console.log(`║  📻 Topics: ${TOPICS.join(', ')}`.padEnd(56) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
   console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} total | ${String(stats.downloadedPending).padStart(3)} pending             ║`);
