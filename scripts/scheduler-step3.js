@@ -18,7 +18,7 @@ const DLQ_FILE = path.join(DATA_DIR, 'dlq.json');
 const PERMANENT_FAIL_FILE = path.join(DATA_DIR, 'permanent-fail.json');
 
 const MAX_RETRIES = 5;
-const BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
+const BACKOFF_MS = [1800000, 3600000, 7200000, 14400000, 28800000]; // 30m, 1h, 2h, 4h, 8h
 
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
