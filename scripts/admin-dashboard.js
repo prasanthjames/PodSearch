@@ -83,13 +83,13 @@ function displayDashboard() {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log(`║  📥 Queue Ready:       ${String(stats.queueCount).padStart(6)}                       ║`);
-  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)}                       ║`);
-  console.log(`║  📻 Transcribed:       ${String(stats.transcribed).padStart(6)}                       ║`);
-  console.log(`║  🔢 Embeddings Created:   ${String(stats.embeddingCount).padStart(6)}                       ║`);
-  console.log(`║  ✅ Processed Successfully: ${String(stats.processedCount).padStart(5)}                      ║`);
-  console.log(`║  ⏳ DLQ (Retry Queue):    ${String(stats.dlqCount).padStart(6)}                       ║`);
-  console.log(`║  ❌ Permanent Fails:      ${String(stats.permanentFailCount).padStart(6)}                       ║`);
+  console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} waiting                    ║`);
+  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} to transcribe             ║`);
+  console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} to embed                ║`);
+  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingCount).padStart(6)} completed               ║`);
+  console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)} total done              ║`);
+  console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} retrying                   ║`);
+  console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)} permanent               ║`);
   
   if (stats.currentStatus) {
     console.log('╠════════════════════════════════════════════════════════════╣');
@@ -124,7 +124,7 @@ function displayDashboard() {
   
   // Show permanent fails
   if (stats.permanentFailCount > 0) {
-    console.log('\n❌ Permanent Fails:');
+    console.log('\n❌ Failed:');
     const fails = loadJSON(PERMANENT_FAIL_FILE);
     fails.slice(-5).forEach((item, i) => {
       console.log(`  ${i+1}. ${item.episode?.title?.substring(0, 40) || item.episode?.externalId}`);
