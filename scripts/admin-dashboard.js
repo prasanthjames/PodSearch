@@ -15,14 +15,20 @@ const DLQ_FILE = path.join(DATA_DIR, 'dlq.json');
 const PROCESSED_FILE = path.join(DATA_DIR, 'processed-episodes.json');
 const PERMANENT_FAIL_FILE = path.join(DATA_DIR, 'permanent-fail.json');
 
-// Topics currently tracked
-const TOPICS = [
-  'finance',
-  'personal improvement',
-  'mexico city',
-  'el mencho',
-  'cartel'
-];
+// Load topics dynamically from fetch-episodes.js
+let TOPICS = [];
+try {
+  const fetchContent = fs.readFileSync(path.join(__dirname, 'fetch-episodes.js'), 'utf-8');
+  const match = fetchContent.match(/const TOPICS = \[[\s\S]*?\];/);
+  if (match) {
+    // Convert JS array to valid JSON (single quotes to double quotes)
+    let topicsStr = match[0].replace('const TOPICS = ', '').replace(';', '');
+    topicsStr = topicsStr.replace(/'/g, '"');
+    TOPICS = JSON.parse(topicsStr);
+  }
+} catch (e) {
+  TOPICS = ['finance', 'personal improvement']; // fallback
+}
 
 function loadJSON(file, defaultVal = []) {
   if (!fs.existsSync(file)) return defaultVal;
