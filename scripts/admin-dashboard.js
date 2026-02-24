@@ -96,7 +96,6 @@ function displayDashboard() {
   console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} (Remaining)             ║`);
   console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
   console.log(`║  🔢 Embeddings:        ${String(stats.embeddingsRemaining).padStart(6)} (Remaining)              ║`);
-  console.log(`║  ✅ Embed Completed:   ${String(stats.embeddingCount).padStart(6)}                       ║`);
   console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)}                       ║`);
   console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} (Remaining)                   ║`);
   console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)}                       ║`);
