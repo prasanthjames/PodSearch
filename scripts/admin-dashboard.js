@@ -28,13 +28,18 @@ function getStats() {
   // Queue: episodes identified but not yet downloaded
   const queue = loadJSON(path.join(DATA_DIR, 'scheduler-queue.json'));
   
-  // Downloaded: audio files NOT yet transcribed
+  // Downloaded: ALL audio files in data folder
+  const dataAudioFiles = fs.existsSync(AUDIO_DIR)
+    ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3') || f.endsWith('.m4a')).length
+    : 0;
+  
+  // Transcribed: audio files NOT yet transcribed
   const transcribedIds = fs.existsSync(TRANSCRIPTIONS_DIR) 
     ? new Set(fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt')).map(f => f.replace('.txt', '')))
     : new Set();
     
-  const downloaded = fs.existsSync(AUDIO_DIR) 
-    ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3') && !transcribedIds.has(f.replace('.mp3', ''))).length
+  const downloadedPending = fs.existsSync(AUDIO_DIR) 
+    ? fs.readdirSync(AUDIO_DIR).filter(f => (f.endsWith('.mp3') || f.endsWith('.m4a')) && !transcribedIds.has(f.replace(/\.(mp3|m4a)/, ''))).length
     : 0;
   
   // Transcribed: transcripts NOT yet embedded  
@@ -87,7 +92,8 @@ function getStats() {
   
   return {
     transcribed,
-    downloaded,
+    downloaded: dataAudioFiles,
+    downloadedPending,
     embeddingsRemaining,
     embeddingCount,
     processedToday,
@@ -106,7 +112,7 @@ function displayDashboard() {
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
-  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} (Remaining)             ║`);
+  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} total | ${String(stats.downloadedPending).padStart(3)} pending             ║`);
   console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
   console.log(`║  🔢 Embeddings:        ${String(stats.embeddingsRemaining).padStart(6)} (Remaining)              ║`);
   console.log(`║  ✅ Processed:         ${String(stats.processedToday).padStart(6)} (24h)                       ║`);
