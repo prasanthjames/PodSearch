@@ -8,7 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { DATA_DIR, TRANSCRIPTIONS_DIR, EMBEDDINGS_DIR } = require('./paths');
+const { DATA_DIR, TRANSCRIPTIONS_DIR, EMBEDDINGS_DIR, AUDIO_DIR } = require('./paths');
 
 const LOG_FILE = path.join(DATA_DIR, 'scheduler.log');
 const DLQ_FILE = path.join(DATA_DIR, 'dlq.json');
@@ -32,6 +32,11 @@ function getStats() {
   
   const embeddings = loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json'));
   const embeddingCount = embeddings.episodes?.length || embeddings.length || 0;
+  
+  // Downloaded (audio files waiting to be processed)
+  const downloaded = fs.existsSync(AUDIO_DIR) 
+    ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3')).length 
+    : 0;
   
   const processed = loadJSON(PROCESSED_FILE);
   const dlq = loadJSON(DLQ_FILE);
@@ -61,6 +66,7 @@ function getStats() {
   
   return {
     transcribed,
+    downloaded,
     embeddingCount,
     processedCount: processed.length,
     queueCount: queue.length,
@@ -78,7 +84,8 @@ function displayDashboard() {
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  📥 Queue Ready:       ${String(stats.queueCount).padStart(6)}                       ║`);
-  console.log(`║  📻 Episodes Transcribed:  ${String(stats.transcribed).padStart(6)}                       ║`);
+  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)}                       ║`);
+  console.log(`║  📻 Transcribed:       ${String(stats.transcribed).padStart(6)}                       ║`);
   console.log(`║  🔢 Embeddings Created:   ${String(stats.embeddingCount).padStart(6)}                       ║`);
   console.log(`║  ✅ Processed Successfully: ${String(stats.processedCount).padStart(5)}                      ║`);
   console.log(`║  ⏳ DLQ (Retry Queue):    ${String(stats.dlqCount).padStart(6)}                       ║`);
