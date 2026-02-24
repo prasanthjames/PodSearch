@@ -13,6 +13,7 @@
 - [x] **Multiple chunks per episode** - find all matches, add all to playlist
 - [x] **Build full playlist** - aggregate all matching chunks from all episodes
 - [x] **Search results as audio playlist** - clickable URLs with natural start/end (~5 min chunks)
+- [x] **Hourly scheduler** - download → transcribe → embed new episodes every hour
 - [ ] **Continuous playlist playback** ← NEXT
 - [ ] Semantic search (embeddings)
 
