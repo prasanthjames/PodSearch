@@ -32,7 +32,7 @@ function getTranscribedIds() {
 }
 
 function main() {
-  log('=== Scheduler Step 2: Build Queue ===');
+  log('=== BUILD QUEUE: Identify episodes to process ===');
   
   const transcribed = getTranscribedIds();
   const processed = new Set(loadJSON(PROCESSED_FILE));
@@ -95,7 +95,6 @@ function main() {
   fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
   
   log(`Queue built: ${queue.length} episodes to process`);
-  log(`Step 2 complete`);
 }
 
 main();

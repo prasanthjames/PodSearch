@@ -32,7 +32,7 @@ function runCommand(cmd, args) {
 }
 
 async function main() {
-  log('=== Scheduler Step 1: Fetch ===');
+  log('=== FETCH: Fetch new episodes from Apple Podcasts ===');
   
   try {
     await runCommand('node', ['scripts/fetch-episodes.js']);
@@ -47,7 +47,7 @@ async function main() {
     const episodes = JSON.parse(fs.readFileSync(EPISODES_FILE, 'utf-8'));
     log(`Total episodes: ${episodes.length}`);
     
-    log('Step 1 complete');
+    log('Fetch complete');
   } catch (err) {
     log(`Error: ${err.message}`);
   }

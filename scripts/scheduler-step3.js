@@ -56,7 +56,7 @@ function sleep(ms) {
 }
 
 async function main() {
-  log('=== Scheduler Step 3: Process Episode ===');
+  log('=== PROCESS: Download → Transcribe → Embed ===');
   
   // Load queue
   const queue = loadJSON(QUEUE_FILE);
@@ -142,7 +142,7 @@ async function main() {
     log(`Added to DLQ, retry ${retryCount + 1}`);
   }
   
-  log('Step 3 complete');
+  log('=== PROCESS COMPLETE ===');
 }
 
 main();
