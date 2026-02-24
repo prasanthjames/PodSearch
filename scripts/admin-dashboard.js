@@ -37,11 +37,13 @@ function getStats() {
   const dlq = loadJSON(DLQ_FILE);
   const permanentFail = loadJSON(PERMANENT_FAIL_FILE);
   
-  // Recent log entries
+  // Recent log entries with timestamps
   let recentLogs = [];
   if (fs.existsSync(LOG_FILE)) {
     const logs = fs.readFileSync(LOG_FILE, 'utf-8').split('\n');
-    recentLogs = logs.filter(l => l.includes('===')).slice(-5).reverse();
+    // Get last 10 lines with timestamps
+    const logLines = logs.filter(l => l.includes('Scheduler') || l.includes('Step'));
+    recentLogs = logLines.slice(-10).reverse();
   }
   
   return {
@@ -66,10 +68,17 @@ function displayDashboard() {
   console.log(`║  ⏳ DLQ (Retry Queue):    ${String(stats.dlqCount).padStart(6)}                       ║`);
   console.log(`║  ❌ Permanent Fails:      ${String(stats.permanentFailCount).padStart(6)}                       ║`);
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log('║  📜 Recent Scheduler Runs:                                ║');
+  console.log('║  📜 Recent Scheduler Runs (last 10):                      ║');
   for (const log of stats.recentLogs) {
-    const clean = log.replace(/.*\]\s*/, '').substring(0, 50);
-    console.log(`║    ${clean.padStart(50)}║`);
+    // Extract timestamp and message
+    const match = log.match(/\[([\d\-T:+:.]+Z)\]\s*(.*)/);
+    if (match) {
+      const time = new Date(match[1]).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const msg = match[2].substring(0, 40);
+      console.log(`║  ${time} │ ${msg.padEnd(40)}║`);
+    } else {
+      console.log(`║    ${log.substring(0, 50).padStart(50)}║`);
+    }
   }
   console.log('╚════════════════════════════════════════════════════════════╝');
   
