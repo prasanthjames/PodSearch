@@ -36,24 +36,37 @@ function getStats() {
   const processed = loadJSON(PROCESSED_FILE);
   const dlq = loadJSON(DLQ_FILE);
   const permanentFail = loadJSON(PERMANENT_FAIL_FILE);
+  const queue = loadJSON(path.join(DATA_DIR, 'scheduler-queue.json'));
   
   // Recent log entries with timestamps
   let recentLogs = [];
+  let currentStatus = null;
+  
   if (fs.existsSync(LOG_FILE)) {
     const logs = fs.readFileSync(LOG_FILE, 'utf-8').split('\n');
-    // Get last 10 lines with process names
+    
+    // Get current in-progress status
+    const processing = logs.filter(l => l.includes('Processing:')).pop();
+    if (processing) {
+      const match = processing.match(/Processing: (.+)/);
+      if (match) currentStatus = match[1].substring(0, 50);
+    }
+    
+    // Get last 10 process events
     const logLines = logs.filter(l => 
-      l.includes('FETCH') || l.includes('BUILD QUEUE') || l.includes('PROCESS') || l.includes('COMPLETE')
+      l.includes('FETCH') || l.includes('BUILD QUEUE') || l.includes('PROCESS') || l.includes('COMPLETE') || l.includes('Processing:')
     );
-    recentLogs = logLines.slice(-10).reverse();
+    recentLogs = logLines.slice(-15).reverse();
   }
   
   return {
     transcribed,
     embeddingCount,
     processedCount: processed.length,
+    queueCount: queue.length,
     dlqCount: dlq.length,
     permanentFailCount: permanentFail.length,
+    currentStatus,
     recentLogs
   };
 }
@@ -64,13 +77,20 @@ function displayDashboard() {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
+  console.log(`║  📥 Queue Ready:       ${String(stats.queueCount).padStart(6)}                       ║`);
   console.log(`║  📻 Episodes Transcribed:  ${String(stats.transcribed).padStart(6)}                       ║`);
   console.log(`║  🔢 Embeddings Created:   ${String(stats.embeddingCount).padStart(6)}                       ║`);
   console.log(`║  ✅ Processed Successfully: ${String(stats.processedCount).padStart(5)}                      ║`);
   console.log(`║  ⏳ DLQ (Retry Queue):    ${String(stats.dlqCount).padStart(6)}                       ║`);
   console.log(`║  ❌ Permanent Fails:      ${String(stats.permanentFailCount).padStart(6)}                       ║`);
+  
+  if (stats.currentStatus) {
+    console.log('╠════════════════════════════════════════════════════════════╣');
+    console.log(`║  🔄 CURRENT: ${stats.currentStatus.padEnd(36)}║`);
+  }
+  
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log('║  📜 Recent Scheduler Runs (last 10):                      ║');
+  console.log('║  📜 Recent Activity:                                     ║');
   for (const log of stats.recentLogs) {
     // Extract timestamp and message
     const match = log.match(/\[([\d\-T:+:.]+Z)\]\s*(.*)/);
