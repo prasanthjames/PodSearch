@@ -43,6 +43,9 @@ function getStats() {
     ? fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt') && !embeddedIds.has(f.replace('.txt', ''))).length
     : 0;
   
+  // Embeddings: NOT yet embedded (transcribed but no embedding)
+  const embeddingsRemaining = transcribed;
+  
   const embeddingCount = embeddedIds.size;
   const processed = loadJSON(PROCESSED_FILE);
   const dlq = loadJSON(DLQ_FILE);
@@ -72,6 +75,7 @@ function getStats() {
   return {
     transcribed,
     downloaded,
+    embeddingsRemaining,
     embeddingCount,
     processedCount: processed.length,
     queueCount: queue.length,
@@ -91,7 +95,7 @@ function displayDashboard() {
   console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
   console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} (Remaining)             ║`);
   console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
-  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingCount).padStart(6)} (Remaining)              ║`);
+  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingsRemaining).padStart(6)} (Remaining)              ║`);
   console.log(`║  ✅ Embed Completed:   ${String(stats.embeddingCount).padStart(6)}                       ║`);
   console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)}                       ║`);
   console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} (Remaining)                   ║`);
