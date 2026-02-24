@@ -17,7 +17,8 @@ const TOPICS = [
   'finance',
   'personal improvement',
   'mexico city',
-  'el mencho'
+  'el mencho',
+  'cartel'
 ];
 
 const EPISODES_PER_TOPIC = 10;

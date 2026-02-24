@@ -75,7 +75,8 @@ async function search(query, limit = 10) {
   console.log(`🔍 Searching for: "${query}"\n`);
   
   // Load embeddings
-  const embeddings = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf-8'));
+  const embeddingsData = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf-8'));
+  const embeddings = (embeddingsData.episodes || embeddingsData).filter(ep => ep.embedding);
   
   // Generate query embedding
   const queryEmbedding = await getQueryEmbedding(query);

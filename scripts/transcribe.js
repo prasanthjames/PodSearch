@@ -127,21 +127,37 @@ async function transcribeEpisode(episode) {
     // Save transcript
     fs.writeFileSync(transcriptPath, transcript);
     
-    // Generate embedding automatically after transcription
-    console.log(`🔢 Generating embedding...`);
-    try {
-      const embedding = await createEpisodeEmbedding(episode);
-      if (embedding) {
-        // Load existing embeddings or create new array
-        let embeddings = [];
-        if (fs.existsSync(EMBEDDINGS_FILE)) {
-          embeddings = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf-8'));
+      // Get simplified ID for consistent embedding storage
+      const allEpisodes = JSON.parse(fs.readFileSync(EPISODES_FILE, 'utf-8'));
+      let episodeNum = 1;
+      for (const ep of allEpisodes) {
+        if (ep.topic === episode.topic) {
+          if (ep.externalId === episode.externalId) break;
+          episodeNum++;
         }
-        // Add new embedding, filter out existing one for same episodeId
-        embeddings = embeddings.filter(e => e.episodeId !== episode.externalId);
-        embeddings.push(embedding);
-        fs.writeFileSync(EMBEDDINGS_FILE, JSON.stringify(embeddings, null, 2));
-        console.log(`✅ Embedding saved for ${episode.externalId}`);
+      }
+      const safeTopic = (episode.topic || 'unknown').replace(/[^a-z]/g, '_').substring(0, 20);
+      const episodeId = `${safeTopic}_${String(episodeNum).padStart(3, '0')}`;
+      
+      // Generate embedding automatically after transcription
+      console.log(`🔢 Generating embedding...`);
+      try {
+        const embedding = await createEpisodeEmbedding(episode);
+        if (embedding) {
+          // Update with correct episodeId
+          embedding.episodeId = episodeId;
+          
+          // Load existing embeddings or create new array
+          let embeddings = [];
+          if (fs.existsSync(EMBEDDINGS_FILE)) {
+            embeddings = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf-8'));
+            if (embeddings.episodes) embeddings = embeddings.episodes;
+          }
+          // Add new embedding, filter out existing one for same episodeId
+          embeddings = embeddings.filter(e => e.episodeId !== episodeId);
+          embeddings.push(embedding);
+          fs.writeFileSync(EMBEDDINGS_FILE, JSON.stringify({ episodes: embeddings }, null, 2));
+          console.log(`✅ Embedding saved for ${episodeId}`);
         
         // Delete original audio file to save space
         const originalAudioPath = path.join(AUDIO_DIR, `${externalId}.${audioExt}`);
