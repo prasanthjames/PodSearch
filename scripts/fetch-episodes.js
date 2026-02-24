@@ -16,9 +16,8 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const TOPICS = [
   'finance',
   'personal improvement',
-  'mexico city',
-  'el mencho',
-  'cartel'
+  'Kerala',
+  'US News'
 ];
 
 const EPISODES_PER_TOPIC = 10;
