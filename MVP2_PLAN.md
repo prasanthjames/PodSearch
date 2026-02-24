@@ -1,4 +1,4 @@
-# Tell Me More - MVP Roadmap
+# PodSearch - MVP Roadmap
 
 ## MVP1: Core Search + Audio Playlist (Current)
 **Goal:** User searches topic → gets audio playlist with time-chunked URLs

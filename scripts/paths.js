@@ -1,6 +1,6 @@
 /**
  * Path Configuration
- * Centralized folder paths for Tell Me More
+ * Centralized folder paths for PodSearch
  */
 
 const path = require('path');

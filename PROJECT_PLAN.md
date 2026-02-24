@@ -1,4 +1,4 @@
-# Tell Me More - Podcast Playlist App
+# PodSearch - Podcast Playlist App
 
 ## Project Overview
 

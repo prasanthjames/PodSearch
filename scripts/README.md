@@ -1,4 +1,4 @@
-# Tell Me More - Backend Scripts
+# PodSearch - Backend Scripts
 
 ## Quick Start
 
@@ -60,7 +60,7 @@ Apple Podcasts API → fetch-episodes.js → episodes.json
 ## Files
 
 ```
-tell-me-more/
+PodSearch/
 ├── prisma/
 │   └── schema.prisma          # Database schema
 ├── scripts/

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Production-ready deployment architecture for Tell Me More podcast playlist app.
+Production-ready deployment architecture for PodSearch podcast playlist app.
 
 ---
 
@@ -280,7 +280,7 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"Tell Me More deployed to production!"}' \
+            --data '{"text":"PodSearch deployed to production!"}' \
             ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
 

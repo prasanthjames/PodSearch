@@ -295,8 +295,8 @@ Beta transcripts (whisper.cpp) → Re-transcribe with Faster Whisper → Same fo
 ### Frontend
 ```bash
 # Create Next.js app
-npx create-next-app@latest tell-me-more-web --typescript --tailwind --eslint
-cd tell-me-more-web
+npx create-next-app@latest PodSearch-web --typescript --tailwind --eslint
+cd PodSearch-web
 
 # Install dependencies
 npm install zustand next-auth howler axios lucide-react date-fns clsx tailwind-merge react-hook-form @hookform/resolvers/zod zod
@@ -308,8 +308,8 @@ npm install -D @types/node @types/react @types/react-dom @types/howler eslint pr
 ### Backend (Python Services)
 ```bash
 # Create Python project
-mkdir tell-me-more-api
-cd tell-me-more-api
+mkdir PodSearch-api
+cd PodSearch-api
 python -m venv venv
 source venv/bin/activate
 
@@ -336,8 +336,8 @@ docker-compose.yml includes:
 ## 12. File Structure
 
 ```
-tell-me-more/
-├── tell-me-more-web/           # Next.js frontend
+PodSearch/
+├── PodSearch-web/           # Next.js frontend
 │   ├── src/
 │   │   ├── app/                # App Router pages
 │   │   ├── components/         # React components
@@ -347,7 +347,7 @@ tell-me-more/
 │   ├── public/
 │   └── package.json
 │
-├── tell-me-more-api/           # Python backend
+├── PodSearch-api/           # Python backend
 │   ├── services/
 │   │   ├── catalog/           # Ingestion pipeline
 │   │   ├── transcriber/       # Whisper integration
@@ -357,7 +357,7 @@ tell-me-more/
 │   ├── models/                # Pydantic models
 │   └── tests/
 │
-├── tell-me-more-go/            # Go services
+├── PodSearch-go/            # Go services
 │   ├── cmd/
 │   │   ├── auth-service/
 │   │   ├── playlist-service/

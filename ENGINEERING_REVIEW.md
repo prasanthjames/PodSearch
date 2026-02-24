@@ -1,4 +1,4 @@
-# Engineering Review - Tell Me More
+# Engineering Review - PodSearch
 
 **Review Date:** February 18, 2026  
 **Reviewer:** Engineering Lead  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Tell Me More module designs are well-structured and follow industry best practices. The architecture is appropriate for an MVP with clear paths to scale. **Approval recommended** with 12 items requiring attention before implementation.
+The PodSearch module designs are well-structured and follow industry best practices. The architecture is appropriate for an MVP with clear paths to scale. **Approval recommended** with 12 items requiring attention before implementation.
 
 ---
 
