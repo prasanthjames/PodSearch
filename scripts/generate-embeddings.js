@@ -52,7 +52,15 @@ async function createEpisodeEmbedding(episode, episodeId) {
   const safeTopic = (episode.topic || 'unknown').replace(/[^a-z]/g, '_').substring(0, 20);
   const finalId = `${safeTopic}_${String(episodeNum).padStart(3, '0')}`;
   
-  return { episodeId: finalId, topic: episode.topic, embedding, title: episode.title, showName: episode.showName };
+  return { 
+    episodeId: finalId, 
+    topic: episode.topic, 
+    embedding, 
+    title: episode.title, 
+    showName: episode.showName,
+    audioUrl: episode.audioUrl || null,
+    externalId: episode.externalId
+  };
 }
 
 module.exports = { createEpisodeEmbedding, generateEmbeddingWithOpenAI, cosineSimilarity, EMBEDDINGS_FILE };
