@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { EMBEDDINGS_FILE, EPISODES_FILE } = require('./paths');
+const { EMBEDDINGS_FILE, EPISODES_FILE, TRANSCRIPTIONS_DIR } = require('./paths');
 
 require('dotenv').config();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -85,17 +85,34 @@ function loadEpisodes() {
 }
 
 /**
- * Estimate duration from episode metadata or use default
- * Returns estimated duration in seconds
+ * Get actual duration from transcription file (last timestamp)
+ * Falls back to metadata/description/default
  */
-function estimateDuration(episode) {
-  // Try to get from metadata (episodes.json has duration field)
-  if (episode && episode.duration) {
-    const d = parseInt(episode.duration);
-    if (d > 60) return d; // Reasonable duration
+function getActualDuration(episodeId, episode) {
+  // Try transcription file first - parse last timestamp
+  const transcriptPath = path.join(TRANSCRIPTIONS_DIR, `${episodeId}.txt`);
+  if (fs.existsSync(transcriptPath)) {
+    const content = fs.readFileSync(transcriptPath, 'utf-8');
+    // Find last timestamp: [HH:MM:SS.mmm --> HH:MM:SS.mmm]
+    const matches = content.matchAll(/\[(\d{2}:\d{2}:\d{2}\.\d{3}) -->/g);
+    let lastTs = null;
+    for (const match of matches) {
+      lastTs = match[1];
+    }
+    if (lastTs) {
+      const parts = lastTs.split(':');
+      const seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
+      if (seconds > 60) return seconds; // Reasonable duration
+    }
   }
   
-  // Try from description (sometimes contains "X min")
+  // Try episode metadata
+  if (episode && episode.duration) {
+    const d = parseInt(episode.duration);
+    if (d > 60) return d;
+  }
+  
+  // Try description
   if (episode && episode.description) {
     const minMatch = episode.description.match(/(\d+)\s*min/i);
     if (minMatch) {
@@ -220,7 +237,7 @@ async function searchChunks(query) {
       audioUrl: ep.audioUrl || episode.audioUrl || null,
       description: ep.description || episode.description || null,
       // Use embedding's episode data first, then fallback to episodesMap
-      duration: (ep.duration) || (episode.duration) || estimateDuration(episode),
+      duration: getActualDuration(ep.episodeId, episode),
       similarity: cosineSimilarity(queryEmbedding, ep.embedding)
     };
   }).sort((a, b) => b.similarity - a.similarity).slice(0, SEARCH_LIMIT);
