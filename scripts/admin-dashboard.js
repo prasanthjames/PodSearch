@@ -41,8 +41,10 @@ function getStats() {
   let recentLogs = [];
   if (fs.existsSync(LOG_FILE)) {
     const logs = fs.readFileSync(LOG_FILE, 'utf-8').split('\n');
-    // Get last 10 lines with timestamps
-    const logLines = logs.filter(l => l.includes('Scheduler') || l.includes('Step'));
+    // Get last 10 lines with process names
+    const logLines = logs.filter(l => 
+      l.includes('FETCH') || l.includes('BUILD QUEUE') || l.includes('PROCESS') || l.includes('COMPLETE')
+    );
     recentLogs = logLines.slice(-10).reverse();
   }
   
