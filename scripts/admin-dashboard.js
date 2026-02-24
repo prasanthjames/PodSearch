@@ -25,23 +25,28 @@ function loadJSON(file, defaultVal = []) {
 }
 
 function getStats() {
-  // Episode counts
-  const transcribed = fs.existsSync(TRANSCRIPTIONS_DIR) 
-    ? fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt')).length 
-    : 0;
+  // Queue: episodes identified but not yet downloaded
+  const queue = loadJSON(path.join(DATA_DIR, 'scheduler-queue.json'));
   
-  const embeddings = loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json'));
-  const embeddingCount = embeddings.episodes?.length || embeddings.length || 0;
-  
-  // Downloaded (audio files waiting to be processed)
+  // Downloaded: audio files NOT yet transcribed
+  const transcribedIds = fs.existsSync(TRANSCRIPTIONS_DIR) 
+    ? new Set(fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt')).map(f => f.replace('.txt', '')))
+    : new Set();
+    
   const downloaded = fs.existsSync(AUDIO_DIR) 
-    ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3')).length 
+    ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3') && !transcribedIds.has(f.replace('.mp3', ''))).length
     : 0;
   
+  // Transcribed: transcripts NOT yet embedded  
+  const embeddedIds = new Set((loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json')).episodes || []).map(e => e.episodeId));
+  const transcribed = fs.existsSync(TRANSCRIPTIONS_DIR) 
+    ? fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt') && !embeddedIds.has(f.replace('.txt', ''))).length
+    : 0;
+  
+  const embeddingCount = embeddedIds.size;
   const processed = loadJSON(PROCESSED_FILE);
   const dlq = loadJSON(DLQ_FILE);
   const permanentFail = loadJSON(PERMANENT_FAIL_FILE);
-  const queue = loadJSON(path.join(DATA_DIR, 'scheduler-queue.json'));
   
   // Recent log entries with timestamps
   let recentLogs = [];
