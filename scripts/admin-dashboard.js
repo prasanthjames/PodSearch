@@ -45,9 +45,22 @@ function getStats() {
   
   // Embeddings: NOT yet embedded (transcribed but no embedding)
   const embeddingsRemaining = transcribed;
-  
   const embeddingCount = embeddedIds.size;
-  const processed = loadJSON(PROCESSED_FILE);
+  
+  // Processed: count "Done:" in last 24 hours from logs
+  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  let processedToday = 0;
+  if (fs.existsSync(LOG_FILE)) {
+    const logs = fs.readFileSync(LOG_FILE, 'utf-8').split('\n');
+    for (const log of logs) {
+      const match = log.match(/\[([\d\-T:+:.]+Z)\].*Done:/);
+      if (match) {
+        const logTime = new Date(match[1]).getTime();
+        if (logTime > oneDayAgo) processedToday++;
+      }
+    }
+  }
+  
   const dlq = loadJSON(DLQ_FILE);
   const permanentFail = loadJSON(PERMANENT_FAIL_FILE);
   
@@ -77,7 +90,7 @@ function getStats() {
     downloaded,
     embeddingsRemaining,
     embeddingCount,
-    processedCount: processed.length,
+    processedToday,
     queueCount: queue.length,
     dlqCount: dlq.length,
     permanentFailCount: permanentFail.length,
@@ -96,7 +109,7 @@ function displayDashboard() {
   console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} (Remaining)             ║`);
   console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
   console.log(`║  🔢 Embeddings:        ${String(stats.embeddingsRemaining).padStart(6)} (Remaining)              ║`);
-  console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)}                       ║`);
+  console.log(`║  ✅ Processed:         ${String(stats.processedToday).padStart(6)} (24h)                       ║`);
   console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} (Remaining)                   ║`);
   console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)}                       ║`);
   
