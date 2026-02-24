@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Shows table
+model Show {
+  id          String    @id @default(uuid())
+  externalId  String    @unique
+  name        String
+  author      String?
+  imageUrl    String?
+  categories  String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  episodes    Episode[]
+}
+
+// Episodes table
+model Episode {
+  id                String    @id @default(uuid())
+  externalId        String    @unique
+  showId            String
+  show              Show      @relation(fields: [showId], references: [id])
+  title             String
+  description       String?
+  audioUrl          String
+  imageUrl          String?
+  publishDate       DateTime
+  durationSeconds   Int?
+  explicit          Boolean   @default(false)
+  
+  // Processing status
+  transcriptionStatus String  @default("pending") // pending, processing, done, failed
+  transcript         String?
+  
+  // Embedding for semantic search (pgvector)
+  embedding          Unsupported("vector(384)")?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([showId])
+  @@index([publishDate])
+  @@index([transcriptionStatus])
+}
