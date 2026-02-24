@@ -83,13 +83,13 @@ function displayDashboard() {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} waiting                    ║`);
-  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} to transcribe             ║`);
-  console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} to embed                ║`);
-  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingCount).padStart(6)} completed               ║`);
-  console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)} total done              ║`);
-  console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} retrying                   ║`);
-  console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)} permanent               ║`);
+  console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
+  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} (Remaining)             ║`);
+  console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
+  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingCount).padStart(6)}                       ║`);
+  console.log(`║  ✅ Processed:         ${String(stats.processedCount).padStart(6)}                       ║`);
+  console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} (Remaining)                   ║`);
+  console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)}                       ║`);
   
   if (stats.currentStatus) {
     console.log('╠════════════════════════════════════════════════════════════╣');
