@@ -40,42 +40,36 @@ function loadJSON(file, defaultVal = []) {
 }
 
 function getStats() {
-  // Queue: episodes identified but not yet downloaded
-  const queue = loadJSON(path.join(DATA_DIR, 'scheduler-queue.json'));
+  // Queue: processing-queue.json
+  const queue = loadJSON(path.join(DATA_DIR, 'processing-queue.json'));
+  const pendingCount = queue.filter(e => e.status === 'pending').length;
+  const processingCount = queue.filter(e => e.status === 'processing').length;
+  const completedCount = queue.filter(e => e.status === 'completed').length;
+  const errorCount = queue.filter(e => e.status === 'error').length;
   
-  // Downloaded: ALL audio files in data folder
-  const dataAudioFiles = fs.existsSync(AUDIO_DIR)
+  // After cleanup: audio and transcription files should be 0
+  // Only embeddings remain
+  const audioFiles = fs.existsSync(AUDIO_DIR)
     ? fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3') || f.endsWith('.m4a')).length
     : 0;
   
-  // Transcribed: audio files NOT yet transcribed
-  const transcribedIds = fs.existsSync(TRANSCRIPTIONS_DIR) 
-    ? new Set(fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt')).map(f => f.replace('.txt', '')))
-    : new Set();
-    
-  const downloadedPending = fs.existsSync(AUDIO_DIR) 
-    ? fs.readdirSync(AUDIO_DIR).filter(f => (f.endsWith('.mp3') || f.endsWith('.m4a')) && !transcribedIds.has(f.replace(/\.(mp3|m4a)/, ''))).length
+  const transcriptFiles = fs.existsSync(TRANSCRIPTIONS_DIR) 
+    ? fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt')).length
     : 0;
   
-  // Transcribed: transcripts NOT yet embedded  
-  const embeddedIds = new Set((loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json')).episodes || []).map(e => e.episodeId));
-  const transcribed = fs.existsSync(TRANSCRIPTIONS_DIR) 
-    ? fs.readdirSync(TRANSCRIPTIONS_DIR).filter(f => f.endsWith('.txt') && !embeddedIds.has(f.replace('.txt', ''))).length
-    : 0;
-  
-  // Embeddings: NOT yet embedded (transcribed but no embedding)
-  const embeddingsRemaining = transcribed;
+  // Embeddings: ONLY source of search data
+  const embeddingsData = loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json'));
+  const embeddedIds = new Set((embeddingsData.episodes || []).map(e => e.episodeId));
   const embeddingCount = embeddedIds.size;
   
   // Count embeddings by topic
-  const embeddingsData = loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json'));
   const embeddingsByTopic = {};
   for (const ep of (embeddingsData.episodes || [])) {
     const t = ep.topic || 'unknown';
     embeddingsByTopic[t] = (embeddingsByTopic[t] || 0) + 1;
   }
   
-  // Processed: count "Done:" in last 24 hours from logs
+  // Remove old log processing (not needed with new queue)
   const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
   let processedToday = 0;
   if (fs.existsSync(LOG_FILE)) {
@@ -114,14 +108,14 @@ function getStats() {
   }
   
   return {
-    transcribed,
-    downloaded: dataAudioFiles,
-    downloadedPending,
-    embeddingsRemaining,
+    audioFiles,
+    transcriptFiles,
     embeddingCount,
     embeddingsByTopic,
-    processedToday,
-    queueCount: queue.length,
+    pendingCount,
+    processingCount,
+    completedCount,
+    errorCount,
     dlqCount: dlq.length,
     permanentFailCount: permanentFail.length,
     currentStatus,
@@ -139,12 +133,12 @@ function displayDashboard() {
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
   console.log(`║  📻 Topics: ${topicStats}`.padEnd(56) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
-  console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} total | ${String(stats.downloadedPending).padStart(3)} pending             ║`);
-  console.log(`║  📝 Transcribed:      ${String(stats.transcribed).padStart(6)} (Remaining)             ║`);
-  console.log(`║  🔢 Embeddings:        ${String(stats.embeddingsRemaining).padStart(6)} (Remaining)              ║`);
-  console.log(`║  ✅ Processed:         ${String(stats.processedToday).padStart(6)} (24h)                       ║`);
-  console.log(`║  ⏳ DLQ:               ${String(stats.dlqCount).padStart(6)} (Remaining)                   ║`);
+  console.log(`║  📥 Queue:            ${String(stats.pendingCount).padStart(6)} pending | ${String(stats.processingCount).padStart(3)} processing        ║`);
+  console.log(`║  ⬇️  Audio files:       ${String(stats.audioFiles).padStart(6)} (should be 0 after cleanup)     ║`);
+  console.log(`║  📝 Transcripts:      ${String(stats.transcriptFiles).padStart(6)} (should be 0 after cleanup)  ║`);
+  console.log(`║  🧠 Embeddings:        ${String(stats.embeddingCount).padStart(6)} (total processed)            ║`);
+  console.log(`║  ✅ Completed:         ${String(stats.completedCount).padStart(6)}                           ║`);
+  console.log(`║  ❌ Errors:             ${String(stats.errorCount).padStart(6)}                           ║`);
   console.log(`║  ❌ Failed:            ${String(stats.permanentFailCount).padStart(6)}                       ║`);
   
   if (stats.currentStatus) {
