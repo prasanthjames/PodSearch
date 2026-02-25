@@ -2,7 +2,7 @@
 
 ## Overview
 
-PodSearch is a podcast search and discovery system using semantic embeddings. All scripts use embeddings for search — **no audio downloading**.
+PodSearch is a podcast search and discovery system using semantic embeddings. **Embeddings are generated ONLY from transcriptions** — that's the core workflow.
 
 ---
 
@@ -15,7 +15,6 @@ Search for episodes matching a query. Returns full episode URLs with metadata.
 ```bash
 node scripts/search.js "finance"
 node scripts/search.js "cartel" --urls
-node scripts/search.js "mexico city" --limit 5 --json
 ```
 
 **Options:**
@@ -23,18 +22,17 @@ node scripts/search.js "mexico city" --limit 5 --json
 - `--limit=N` — Number of results (default: 10)
 - `--json` — JSON output
 
-**Output:** Episode title, show name, topic, match %, full audio URL (no time slicing)
+**Output:** Episode title, show name, topic, match %, full audio URL
 
 ---
 
 ### 2. `search-chunks.js` — Time-Sliced URLs
 
-Generate time-sliced episode URLs using embeddings + metadata. Estimates chunk positions for natural boundaries.
+Generate time-sliced episode URLs using embeddings + transcription-based duration.
 
 ```bash
 node scripts/search-chunks.js "cartel"
 node scripts/search-chunks.js "stock market" --duration=300
-node scripts/search-chunks.js "mexico" --limit=5 --json
 ```
 
 **Options:**
@@ -42,34 +40,16 @@ node scripts/search-chunks.js "mexico" --limit=5 --json
 - `--limit=N` — Number of results (default: 5)
 - `--json` — JSON output
 
-**Features:**
-- Uses embeddings to find relevant episodes
-- Estimates duration from metadata (episode duration field or description)
-- Skips intro (45s) and outro (30s)
-- Positions content in middle of chunk
-- Returns URL with `#t=start,end` hash for podcast app support
-
-**Output:** Episode + time-sliced URL (start-end)
-
 ---
 
 ### 3. `search-playlist.js` — Clickable Playlist
 
-Build a clickable playlist from search results. Internally uses search-chunks logic.
+Build a clickable playlist from search results.
 
 ```bash
 node scripts/search-playlist.js "cartel"
 node scripts/search-playlist.js "finance" --markdown
-node scripts/search-playlist.js "mexico" --json
 ```
-
-**Options:**
-- `--duration=N` — Chunk length (default: 300s)
-- `--limit=N` — Number of results (default: 5)
-- `--markdown` — Markdown table format
-- `--json` — JSON output
-
-**Output:** Clickable URLs formatted as a playlist
 
 ---
 
@@ -81,27 +61,50 @@ node scripts/search-playlist.js "mexico" --json
 node scripts/fetch-episodes.js
 ```
 
-Searches Apple Podcasts by predefined topics, saves to `data/episodes.json`.
+Searches Apple Podcasts by topics in `TOPICS` array, saves to `data/episodes.json`.
 
 ---
 
-### 5. `transcribe.js` — Transcribe Audio
+### 5. `transcribe.js` — Transcribe Audio (REQUIRED)
 
 ```bash
 node scripts/transcribe.js [episodeId]
 ```
 
-Transcribes using OpenAI Whisper API. Saves to `data/transcriptions/{id}.txt` with timestamps.
+**REQUIRED for embeddings.** Transcribes audio using OpenAI Whisper API.
+
+- Saves to `data/transcriptions/{id}.txt` with timestamps
+- **Transcription is required before embedding can be generated**
 
 ---
 
-### 6. `generate-embeddings.js` — Create Embeddings
+### 6. `generate-embeddings.js` — Create Embeddings from Transcriptions
 
 ```bash
 node scripts/generate-embeddings.js
 ```
 
-Generates semantic embeddings for all episodes. Saves to `metadata/embeddings/embeddings.json`.
+**IMPORTANT:** 
+- Generates embeddings **ONLY from transcriptions**
+- Skips episodes without valid transcriptions
+- Won't generate from title/description alone
+- Requires `transcribe.js` to run first
+
+---
+
+## Critical Workflow
+
+```
+1. fetch-episodes.js → episodes.json
+                 ↓
+2. transcribe.js   → data/transcriptions/*.txt
+                 ↓
+3. generate-embeddings.js → metadata/embeddings/embeddings.json
+                 ↓
+4. search.js / search-chunks.js / search-playlist.js
+```
+
+**Order matters:** You must transcribe episodes before generating embeddings. Embeddings require transcription text for semantic search to work properly.
 
 ---
 
@@ -124,40 +127,8 @@ Generates semantic embeddings for all episodes. Saves to `metadata/embeddings/em
 
 ---
 
-## Quick Reference
-
-| Script | Purpose | Audio Download? | Time Slicing? |
-|--------|---------|-----------------|---------------|
-| `search.js` | Find episodes, get URLs | ❌ | ❌ |
-| `search-chunks.js` | Time-sliced URLs | ❌ | ✅ |
-| `search-playlist.js` | Clickable playlist | ❌ | ✅ |
-
----
-
-## Workflow
-
-```bash
-# 1. Fetch episodes
-node scripts/fetch-episodes.js
-
-# 2. Generate embeddings (required for search)
-node scripts/generate-embeddings.js
-
-# 3. Search episodes (full URLs)
-node scripts/search.js "your query" --urls
-
-# 4. Get time-sliced chunks
-node scripts/search-chunks.js "your query"
-
-# 5. Generate playlist
-node scripts/search-playlist.js "your query" --markdown
-```
-
----
-
 ## Requirements
 
 - Node.js
 - OpenAI API key (`OPENAI_API_KEY` in `.env`)
-- macOS (optional, for `afplay`)
-- ffmpeg (optional)
+- Episodes must be transcribed before embeddings can be generated

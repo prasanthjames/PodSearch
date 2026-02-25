@@ -1,4 +1,13 @@
 #!/usr/bin/env node
+/**
+ * Generate Embeddings
+ * Creates semantic embeddings ONLY from transcriptions
+ * 
+ * Usage: node scripts/generate-embeddings.js
+ * 
+ * Requirement: Episodes must be transcribed first (transcripts needed for embeddings)
+ */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -24,19 +33,35 @@ async function generateEmbeddingWithOpenAI(text) {
   return result.data[0].embedding;
 }
 
-function cosineSimilarity(a, b) {
-  if (a.length !== b.length) return 0;
-  let dot = 0, normA = 0, normB = 0;
-  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; normA += a[i] * a[i]; normB += b[i] * b[i]; }
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
+/**
+ * Generate embedding from transcription ONLY
+ * Returns null if no transcription exists
+ */
 async function createEpisodeEmbedding(episode, episodeId) {
   const sid = episodeId || episode.externalId;
   const transcriptPath = path.join(TRANSCRIPTIONS_DIR, `${sid}.txt`);
-  const text = [episode.title, episode.description, fs.existsSync(transcriptPath) ? fs.readFileSync(transcriptPath, 'utf-8').substring(0, 4000) : ''].join('\n\n');
   
-  if (!OPENAI_API_KEY) { console.log('⚠️ No OPENAI_API_KEY'); return null; }
+  // Check if transcription exists
+  if (!fs.existsSync(transcriptPath)) {
+    console.log(`   ⚠️ No transcription for ${sid} - skipping embedding`);
+    return null;
+  }
+  
+  const transcriptContent = fs.readFileSync(transcriptPath, 'utf-8');
+  
+  // Check if transcription is valid (not just whisper logs)
+  if (!transcriptContent.includes('[00:') && !transcriptContent.includes('-->')) {
+    console.log(`   ⚠️ Invalid transcription for ${sid} - skipping embedding`);
+    return null;
+  }
+  
+  // Use transcription only (skip title/description)
+  const text = transcriptContent.substring(0, 8000);
+  
+  if (!OPENAI_API_KEY) { 
+    console.log('⚠️ No OPENAI_API_KEY'); 
+    return null; 
+  }
   
   const embedding = await generateEmbeddingWithOpenAI(text);
   
@@ -59,8 +84,65 @@ async function createEpisodeEmbedding(episode, episodeId) {
     title: episode.title, 
     showName: episode.showName,
     audioUrl: episode.audioUrl || null,
-    externalId: episode.externalId
+    externalId: episode.externalId,
+    duration: episode.duration || null
   };
 }
 
-module.exports = { createEpisodeEmbedding, generateEmbeddingWithOpenAI, cosineSimilarity, EMBEDDINGS_FILE };
+module.exports = { createEpisodeEmbedding, generateEmbeddingWithOpenAI, EMBEDDINGS_FILE };
+
+// Run if called directly
+if (require.main === module) {
+  async function main() {
+    if (!fs.existsSync(EPISODES_FILE)) {
+      console.log('❌ No episodes.json found. Run fetch-episodes.js first.');
+      process.exit(1);
+    }
+    
+    if (!OPENAI_API_KEY) {
+      console.log('❌ Need OPENAI_API_KEY in .env');
+      process.exit(1);
+    }
+    
+    console.log('🎯 Generating embeddings from transcriptions only...\n');
+    
+    const episodes = JSON.parse(fs.readFileSync(EPISODES_FILE, 'utf-8'));
+    const allEmbeddings = [];
+    
+    // Group by topic
+    const byTopic = {};
+    for (const ep of episodes) {
+      const t = ep.topic || 'unknown';
+      if (!byTopic[t]) byTopic[t] = [];
+      byTopic[t].push(ep);
+    }
+    
+    for (const [topic, eps] of Object.entries(byTopic)) {
+      console.log(`📝 Processing ${topic}: ${eps.length} episodes`);
+      
+      for (let i = 0; i < eps.length; i++) {
+        const ep = eps[i];
+        
+        const safeTopic = (topic || 'unknown').replace(/[^a-z]/g, '_').substring(0, 20);
+        const episodeId = `${safeTopic}_${String(i+1).padStart(3, '0')}`;
+        
+        const result = await createEpisodeEmbedding(ep, episodeId);
+        
+        if (result) {
+          allEmbeddings.push(result);
+          console.log(`   ✅ ${episodeId}`);
+        } else {
+          console.log(`   ⏭️  ${episodeId} (no transcription)`);
+        }
+      }
+    }
+    
+    console.log(`\n✅ Generated ${allEmbeddings.length} embeddings from transcriptions`);
+    
+    // Save embeddings
+    fs.writeFileSync(EMBEDDINGS_FILE, JSON.stringify({ episodes: allEmbeddings }, null, 2));
+    console.log(`💾 Saved to ${EMBEDDINGS_FILE}`);
+  }
+  
+  main().catch(console.error);
+}
