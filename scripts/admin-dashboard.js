@@ -67,6 +67,14 @@ function getStats() {
   const embeddingsRemaining = transcribed;
   const embeddingCount = embeddedIds.size;
   
+  // Count embeddings by topic
+  const embeddingsData = loadJSON(path.join(EMBEDDINGS_DIR, 'embeddings.json'));
+  const embeddingsByTopic = {};
+  for (const ep of (embeddingsData.episodes || [])) {
+    const t = ep.topic || 'unknown';
+    embeddingsByTopic[t] = (embeddingsByTopic[t] || 0) + 1;
+  }
+  
   // Processed: count "Done:" in last 24 hours from logs
   const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
   let processedToday = 0;
@@ -111,6 +119,7 @@ function getStats() {
     downloadedPending,
     embeddingsRemaining,
     embeddingCount,
+    embeddingsByTopic,
     processedToday,
     queueCount: queue.length,
     dlqCount: dlq.length,
@@ -123,9 +132,12 @@ function getStats() {
 function displayDashboard() {
   const stats = getStats();
   
+  // Build topic stats string
+  const topicStats = TOPICS.map(t => `${t}:${stats.embeddingsByTopic[t] || 0}`).join(' | ');
+  
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║           PODSEARCH ADMIN DASHBOARD                        ║');
-  console.log(`║  📻 Topics: ${TOPICS.join(', ')}`.padEnd(56) + '║');
+  console.log(`║  📻 Topics: ${topicStats}`.padEnd(56) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  📥 Queue:            ${String(stats.queueCount).padStart(6)} (Remaining)              ║`);
   console.log(`║  ⬇️  Downloaded:       ${String(stats.downloaded).padStart(6)} total | ${String(stats.downloadedPending).padStart(3)} pending             ║`);
