@@ -6,9 +6,36 @@ PodSearch is a podcast search and discovery system using semantic embeddings. **
 
 ---
 
+## Workflow Scripts
+
+### 1. `master-trigger.js` — Daily at 5 AM
+Fetches new episodes from Apple Podcasts based on TOPICS.
+
+```bash
+node scripts/master-trigger.js
+# Cron: 0 5 * * *
+```
+
+### 2. `process-queue.js` — Sequential Processor
+Processes ONE episode at a time: download → transcribe → embed → cleanup.
+
+```bash
+node scripts/process-queue.js
+# Runs continuously until queue is empty
+```
+
+**Workflow:**
+1. Download audio
+2. Transcribe (Whisper API)
+3. Generate embedding from transcription ONLY
+4. Delete audio + transcription (not needed for search)
+5. Repeat
+
+---
+
 ## Search Scripts
 
-### 1. `search.js` — Episode Search (No Time Slicing)
+### 3. `search.js` — Episode Search (No Time Slicing)
 
 Search for episodes matching a query. Returns full episode URLs with metadata.
 
